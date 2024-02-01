@@ -57,6 +57,23 @@ print(vctr)
 # dot product
 vctr_dot = vctr1.dot(vctr2)
 
+#----------------------------------#
+#        Steering Behaviors        #
+#----------------------------------#
+class SteeringOutput:
+    ''' Inputs to steering behaviors:
+    - Character data (position, orientation)  
+    - Target data needed for steering behavior (e.g., position, velocity)  
+    Outputs from steering behaviors:
+    - Linear acceleration (vector, rate of change of velocity)  
+    - Angular acceleration (scalar, rate of change of rotation)  
+
+    linear: Vector # linear acceleration
+    angular: float # angular acceleration, scalar
+    '''
+    def __init__(self):
+    linear = 0 
+    angular = 0
 
 # Movement behaviors (Seek, Flee, Arrive, Continue)
 
