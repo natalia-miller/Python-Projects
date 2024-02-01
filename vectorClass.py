@@ -1,6 +1,6 @@
 # Natalia Miller
 
-''' The following code has been adapted from psuedocode code:
+''' The following code has been adapted from psuedocode:
     I. Millington, Artificial Intelligence for Games, Third Edition,
     CRC Press, Boca Raton FL, 2019
 '''
