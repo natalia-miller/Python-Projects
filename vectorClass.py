@@ -1,48 +1,19 @@
-#!/usr/bin/env python3
-
 
 # TODO: Define kinematic type??
 # TODO: Get function definitons from slide
-'''
-Seek; move directly towards target as fast as possible.
-Flee;  move directly away from target as fast as possible.
-Arrive; move directly towards target, slowing down when near.
-'''
+
 # TODO: See 1 Support r file for vector class example
 # TODO: Need normalize function
-'''
-The NumPy module in Python has the linalg.norm() function that can return the array’s 
-vector norm. Then we divide the array with this norm vector to get the normalized 
-vector. For example, in the code below, we will create a random array and find its 
-normalized form using this method.
-
-v = np.random.rand(10)
-normalized_v = v / np.linalg.norm(v)
-print(normalized_v)
-'''
-
-'''
-When writing normalization function, we need to check for a magnitude of zero, 
-bc we can't divid by zero. 
-
-Javascript code from Khan Academy: 
-https://www.khanacademy.org/computing/computer-programming/programming-natural-simulations/programming-vectors/a/vector-magnitude-normalization
-
-PVector.prototype.normalize = function() {
-  var m = this.mag();
-  if (m > 0) {
-    this.div(m);
-  }
-};
-
-'''
+# TODO: Possibly write my own plotter? sounds hard tho
 
 # Natalia Miller
 
-''' The following code has been adapted from psuedocode:
+'''
+The following code has been adapted from psuedocode:
     I. Millington, Artificial Intelligence for Games, Third Edition,
     CRC Press, Boca Raton FL, 2019
-'''
+''' 
+
 import math
 import numpy as np 
 from matplotlib import pyplot as plt
@@ -61,6 +32,80 @@ from matplotlib import pyplot as plt
 10. steering behavior code (1=Continue, 6=Seek, 7=Flee, 8=Arrive)
 11. collision status (TRUE if collided, FALSE if not collided; always FALSE for Program 1)
 '''
+
+# File for output
+output = open("output.txt","w+")
+output.write("hello world")
+
+#------------------------------------------------------------------------------#
+#                               Vector Functions                               #
+#------------------------------------------------------------------------------#
+def normalize(vector):
+  '''
+   Normalizes a vector using the NumPy module
+  '''
+  normalized_vector = vector / np.linalg.norm(vector)
+  return normalized_vector
+
+#------------------------------------------------------------------------------#
+#                           Character Initializations                          #
+#------------------------------------------------------------------------------#
+
+character_1 = dict(
+	id = 2601,
+	steering_behavior = "Continue",
+	inital_position = (0, 0),
+	inital_velocity = (0, 0),
+	inital_orientation = 0,
+	max_velocity = 0,
+	max_acceleration = 0,
+	target = 0,				 
+  arrival_radius = 0,
+  slowing_radius = 0,
+  time_to_target = 0
+)
+
+character_2 = dict(
+	id = 2602,
+	steering_behavior = "Flee",
+	inital_position = (-30, -50),
+	inital_velocity = (2, 7),
+	inital_orientation = np.pi/4,
+	max_velocity = 8,
+	max_acceleration = 1.5,
+	target = 1,				 
+  arrival_radius = 0,
+  slowing_radius = 0,
+  time_to_target = 0			 
+)
+
+character_3 = dict(
+	id = 2603,
+	steering_behavior = "Seek",
+	inital_position = (-50, 40),
+	inital_velocity = (0, 8),
+	inital_orientation = (3(np.pi))/2,
+	max_velocity = 8,
+	max_acceleration = 2,
+	target = 1,				 
+  arrival_radius = 0,
+  slowing_radius = 0,
+  time_to_target = 0			 
+)
+
+character_4 = dict(
+	id = 2604,
+	steering_behavior = "Arrive",
+	inital_position = (50, 75),
+	inital_velocity = (-9, 4),
+	inital_orientation = np.pi,
+	max_velocity = 10,
+	max_acceleration = 2,
+	target = 1,				 
+  arrival_radius = 4,
+  slowing_radius = 32,
+  time_to_target = 1				 
+)
 
 #------------------------------------------------------------------------------#
 #                              Steering Behaviors                              #
@@ -100,8 +145,8 @@ def update(steering: SteeringOutput, max_speed: float, time: float):
 
   # Check for speed above max and clip  
   if velocity.length() > max_speed:  
-    velocity.normalize()  
-    velocity *= max_speed
+    normalized_velocity = normalize(velocity)
+    normalized_velocity *= max_speed
 
 #------------------------------------------------------------------------------#
 #                              Movement Behaviors                              #
@@ -109,52 +154,59 @@ def update(steering: SteeringOutput, max_speed: float, time: float):
 
 class DynamicSeek:
   ''' 
+  Move directly towards target as fast as possible
+
   Seek: Match character position to target position
     - Determine direction to target
     - Accelerate in that direction at max rate up to max speed
   '''
-  def __init__(self):
+  def __init__(self, steering: character_3):
     '''
     Args:
       character: position and orientation for character -> kinematic
       target: position and orientation for target -> kinematic
       max_acceleration: maximum acceleration rate for character -> float 
     '''
-    self.character = 0 
-    self.target = 0
-    self.max_acceleration = 0 
+    self.character = (ch.position, steering.orientation)
+    self.target = (steering.position, steering.orientation)
+    self.max_acceleration = steering.max_acceleration
+    self.result = (steering.linear, steering.angular)
 
   def get_steering(self) -> SteeringOutput:
     # Create output structure
     result = SteeringOutput()
 
     # Get the direction to the target
-    result.linear = self.target.position - self.character.position
+    result[1] = self.target[1] - self.character[2]
 
     # Accelerate at maximum rate
-    result.linear.normalize()
-    result.linear *= self.max_acceleration
+    result[1] = normalize(result[1])
+    result[1] *= self.max_acceleration
 
     # Output steering
-    result.angular = 0
+    result[2] = 0
+    output.write(result)
     return result
 
 class DynamicFlee:
   ''' 
+  Move directly away from target as fast as possible
+
   Flee: Negate character position to target position
     - Determine direction to target
     - Accelerate in opposite direction at max rate up to max speed
   '''
-  def __init__(self):
+  def __init__(self, steering: SteeringOutput):
     '''
     Args:
       character: position and orientation for character -> kinematic
       target: position and orientation for target -> kinematic
       max_acceleration: maximum acceleration rate for character -> float 
     '''
-    self.character = 0 
-    self.target = 0
-    self.max_acceleration = 0 
+    self.character = (steering.position, steering.orientation) 
+    self.target = (steering.position, steering.orientation)
+    self.max_acceleration = steering.max_acceleration
+    self.result = (steering.linear, steering.angular)
 
   def getSteering(self) -> SteeringOutput:
     # Create output structure
@@ -173,6 +225,8 @@ class DynamicFlee:
 
 class DynamicArrive:
   ''' 
+  Move directly towards target, slowing down when near.
+
   Arrive: Uses two distance raddii to solve the issue that accelerating
   at max rate to max speed causes, i.e. overshooting or orbiting target
     - Slowing-down radius; distance to target below -> character slows down
@@ -241,3 +295,6 @@ class DynamicArrive:
     # Output steering
     result.angular = 0
     return result
+  
+
+output.close()
