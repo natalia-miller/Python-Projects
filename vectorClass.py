@@ -1,3 +1,4 @@
+
 # TODO: Define kinematic type??
 # TODO: Get function definitons from slide
 
@@ -38,10 +39,6 @@ from matplotlib import pyplot as plt
 11. collision status (TRUE if collided, FALSE if not collided; always FALSE for Program 1)
 '''
 
-# File for output
-output = open("output.txt","w+")
-output.write("hello world")
-
 #------------------------------------------------------------------------------#
 #                               Vector Functions                               #
 #------------------------------------------------------------------------------#
@@ -59,6 +56,7 @@ def normalize(vector):
 character_1 = {
   "id": 2601,
 	"steering_behavior": "Continue",
+  "steering_behavior_code": "1",
 	"inital_position": (0, 0),
 	"inital_velocity": (0, 0),
 	"inital_orientation": 0,
@@ -82,6 +80,7 @@ character_1 = {
 character_2 = {
 	"id": 2602,
 	"steering_behavior": "Flee",
+  "steering_behavior_code": "7",
 	"inital_position": (-30, -50),
 	"inital_velocity": (2, 7),
 	"inital_orientation": np.pi/4,
@@ -105,6 +104,7 @@ character_2 = {
 character_3 = {
 	"id": 2603,
 	"steering_behavior": "Seek",
+  "steering_behavior_code": "6",
 	"inital_position": (-50, 40),
 	"inital_velocity": (0, 8),
 	"inital_orientation": (3(np.pi))/2,
@@ -128,6 +128,7 @@ character_3 = {
 character_4 = {
 	"id": 2604,
 	"steering_behavior": "Arrive",
+  "steering_behavior_code": "8",
 	"inital_position": (50, 75),
 	"inital_velocity": (-9, 4),
 	"inital_orientation": np.pi,
@@ -341,5 +342,21 @@ class DynamicArrive:
     # Output steering
     result.angular = 0
     return result
+  
+def output_steering(character):
 
-output.close()
+    with open(r"C:\Users\nmiller\OneDrive - EOS DS USA\Documents\output.txt", "a") as f:
+        print('Number one portal is {0}, {1}, and {other}.'.format('Geeks', 'For', other ='Geeks'))
+        print('{}, '.format(character["timestep"]) +
+            '{}, '.format(character["id"]) +
+            '{}, '.format(character["position_x"]) +
+            '{}, '.format(character["position_z"]) +
+            '{}, '.format(character["velocity_x"]) +
+            '{}, '.format(character["velocity_z"]) +
+            '{}, '.format(character["linear_acceleration_x"]) +
+            '{}'.format(character["linear_acceleration_z"]) +
+            '{}, '.format(character["orientation"]) +
+            '{}, '.format(character["steering_behavior_code"]) +
+            '{}, '.format(character["collision_status"]), file = f)
+
+
