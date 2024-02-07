@@ -3,8 +3,11 @@
 # TODO: Get function definitons from slide
 
 # TODO: See 1 Support r file for vector class example
-# TODO: Need normalize function
 # TODO: Possibly write my own plotter? sounds hard tho
+
+# Make functions separate
+# and then output to character file -> use list??
+# teamStep
 
 # Natalia Miller
 
