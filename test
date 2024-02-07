@@ -1,0 +1,139 @@
+import math
+import numpy as np 
+from matplotlib import pyplot as plt
+
+
+# File for output
+output = open("output.txt","w+")
+output.write("hello world")
+
+
+car = {
+ "brand": "Ford",
+ "model": "Mustang",
+ "year": 1964
+}
+
+character_1 = {
+	"id": 2601,
+	"steering_behavior": "Continue",
+	"inital_position": (0, 0),
+	"inital_velocity": (0, 0),
+	"inital_orientation": 0,
+	"max_velocity": 0,
+	"max_acceleration": 0,
+    "target": 0,				 
+    "arrival_radius": 0,
+    "slowing_radius": 0,
+    "time_to_target": 0,
+    "timestep": 0,
+    "position_x": 0,
+    "position_z": 0,
+    "velocity_x": 0,
+    "velocity_z": 0,
+    "linear_acceleration_x": 0,
+    "linear_acceleration_z": 0,
+    "orientation": 0,
+    "collision_status": False
+}
+
+character_3 = {
+  "id": 2603,
+  "steering_behavior": "Seek",
+  "inital_position": (-50, 40),
+  "inital_velocity": (0, 8),
+  "inital_orientation": math.radians(270),
+  "max_velocity": 8,
+  "max_acceleration": 2,
+  "target": 1,				 
+  "arrival_radius": 0,
+  "slowing_radius": 0,
+  "time_to_target": 0,
+  "timestep": 0,
+  "position_x": -50,
+  "position_z": 40,
+  "velocity_x": 0,
+  "velocity_z": 8,
+  "linear_acceleration_x": 0,
+  "linear_acceleration_z": 0,
+  "orientation": math.radians(270),
+  "collision_status": False
+}
+
+def steering_continue(character):
+  # Continue moving without changing velocity or orientation
+  result = [character["velocity_x"], character["velocity_z"], character["orientation"]]
+  return result
+
+
+class SteeringOutput:
+  ''' 
+   Inputs to steering behaviors:
+    - Character data (position, orientation)  
+    - Target data needed for steering behavior (e.g., position, velocity)  
+   Outputs from steering behaviors:
+    - Linear acceleration (vector, rate of change of velocity)  
+    - Angular acceleration (scalar, rate of change of rotation)  
+  '''
+  def __init__(self):
+    '''
+     Args:
+      linear: linear acceleration -> vector
+      angular: angular acceleration, scalar -> float
+    '''
+    self.linear = 0 
+    self.angular = 0
+    self.position = 0
+    self.orientation = 0
+
+def normalize(vector):
+  '''
+   Normalizes a vector using the NumPy module
+  '''
+  normalized_vector = vector / np.linalg.norm(vector)
+  return normalized_vector
+
+class DynamicSeek:
+  ''' 
+  Move directly towards target as fast as possible
+
+  Seek: Match character position to target position
+    - Determine direction to target
+    - Accelerate in that direction at max rate up to max speed
+  '''
+  def __init__(self, steering: SteeringOutput, character, target):
+    '''
+    Args:
+      character: position and orientation for character -> kinematic
+      target: position and orientation for target -> kinematic
+      max_acceleration: maximum acceleration rate for character -> float 
+    '''
+    self.character_kinematic = (character["inital_position"], character["inital_orientation"])
+    self.target_kinematic = (target["inital_position"], target["inital_orientation"])
+    self.max_acceleration = character["max_acceleration"]
+    self.result = (steering.linear, steering.angular)
+
+def get_steering_seek(character, target) -> SteeringOutput:
+    character_kinematic = [character["inital_position"], character["inital_orientation"]]
+    target_kinematic = [target["inital_position"], target["inital_orientation"]]
+    max_acceleration = character["max_acceleration"]
+    result = [0, 0]
+
+    # Create output structure
+    result = SteeringOutput()
+
+    # Get the direction to the target
+    result[0] = target_kinematic[0] - character_kinematic[0]
+
+    # Accelerate at maximum rate
+    result[0] = normalize(result[0])
+    result[1] *= max_acceleration
+
+    # Output steering
+    result[1] = 0
+    output.write(result)
+    return result
+
+get_steering_seek(character_1, character_3)
+# steering_continue(character_3, character_1)
+print(character_3.values())
