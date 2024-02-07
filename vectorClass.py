@@ -1,4 +1,3 @@
-
 # TODO: Define kinematic type??
 # TODO: Get function definitons from slide
 
@@ -8,6 +7,9 @@
 # Make functions separate
 # and then output to character file -> use list??
 # teamStep
+# need continue function?? -> check R code 
+# For this assignment, the Continue character’s initial velocity and rotation will
+# all be 0, so the Continue character should not move at all
 
 # Natalia Miller
 
@@ -54,61 +56,97 @@ def normalize(vector):
 #                           Character Initializations                          #
 #------------------------------------------------------------------------------#
 
-character_1 = dict(
-	id = 2601,
-	steering_behavior = "Continue",
-	inital_position = (0, 0),
-	inital_velocity = (0, 0),
-	inital_orientation = 0,
-	max_velocity = 0,
-	max_acceleration = 0,
-	target = 0,				 
-  arrival_radius = 0,
-  slowing_radius = 0,
-  time_to_target = 0
-)
+character_1 = {
+  "id": 2601,
+	"steering_behavior": "Continue",
+	"inital_position": (0, 0),
+	"inital_velocity": (0, 0),
+	"inital_orientation": 0,
+	"max_velocity": 0,
+	"max_acceleration": 0,
+	"target": 0,				 
+  "arrival_radius": 0,
+  "slowing_radius": 0,
+  "time_to_target": 0,
+  "timestep": 0,
+  "position_x": 0,
+  "position_z": 0,
+  "velocity_x": 0,
+  "velocity_z": 0,
+  "linear_acceleration_x": 0,
+  "linear_acceleration_z": 0,
+  "orientation": 0,
+  "collision_status": False
+}
 
-character_2 = dict(
-	id = 2602,
-	steering_behavior = "Flee",
-	inital_position = (-30, -50),
-	inital_velocity = (2, 7),
-	inital_orientation = np.pi/4,
-	max_velocity = 8,
-	max_acceleration = 1.5,
-	target = 1,				 
-  arrival_radius = 0,
-  slowing_radius = 0,
-  time_to_target = 0			 
-)
+character_2 = {
+	"id": 2602,
+	"steering_behavior": "Flee",
+	"inital_position": (-30, -50),
+	"inital_velocity": (2, 7),
+	"inital_orientation": np.pi/4,
+	"max_velocity": 8,
+	"max_acceleration": 1.5,
+	"target": 1,				 
+  "arrival_radius": 0,
+  "slowing_radius": 0,
+  "time_to_target": 0,		
+  "timestep": 0,
+  "position_x":-30,
+  "position_z": -50,
+  "velocity_x": 2,
+  "velocity_z": 7,
+  "linear_acceleration_x": 0,
+  "linear_acceleration_z": 0,
+  "orientation": np.pi/4,
+  "collision_status": False
+}
 
-character_3 = dict(
-	id = 2603,
-	steering_behavior = "Seek",
-	inital_position = (-50, 40),
-	inital_velocity = (0, 8),
-	inital_orientation = (3(np.pi))/2,
-	max_velocity = 8,
-	max_acceleration = 2,
-	target = 1,				 
-  arrival_radius = 0,
-  slowing_radius = 0,
-  time_to_target = 0			 
-)
+character_3 = {
+	"id": 2603,
+	"steering_behavior": "Seek",
+	"inital_position": (-50, 40),
+	"inital_velocity": (0, 8),
+	"inital_orientation": (3(np.pi))/2,
+	"max_velocity": 8,
+	"max_acceleration": 2,
+	"target": 1,				 
+  "arrival_radius": 0,
+  "slowing_radius": 0,
+  "time_to_target": 0,
+  "timestep": 0,
+  "position_x": -50,
+  "position_z": 40,
+  "velocity_x": 0,
+  "velocity_z": 8,
+  "linear_acceleration_x": 0,
+  "linear_acceleration_z": 0,
+  "orientation": (3(np.pi))/2,
+  "collision_status": False
+}
 
-character_4 = dict(
-	id = 2604,
-	steering_behavior = "Arrive",
-	inital_position = (50, 75),
-	inital_velocity = (-9, 4),
-	inital_orientation = np.pi,
-	max_velocity = 10,
-	max_acceleration = 2,
-	target = 1,				 
-  arrival_radius = 4,
-  slowing_radius = 32,
-  time_to_target = 1				 
-)
+character_4 = {
+	"id": 2604,
+	"steering_behavior": "Arrive",
+	"inital_position": (50, 75),
+	"inital_velocity": (-9, 4),
+	"inital_orientation": np.pi,
+	"max_velocity": 10,
+	"max_acceleration": 2,
+	"target": 1,				 
+  "arrival_radius": 4,
+  "slowing_radius": 32,
+  "time_to_target": 1,
+  "timestep": 0,
+  "position_x": 50,
+  "position_z": 75,
+  "velocity_x": -9,
+  "velocity_z": 4,
+  "linear_acceleration_x": 0,
+  "linear_acceleration_z": 0,
+  "orientation": np.pi,
+  "collision_status": False			 
+}
 
 #------------------------------------------------------------------------------#
 #                              Steering Behaviors                              #
@@ -132,7 +170,7 @@ class SteeringOutput:
     self.angular = 0
 
 # TODO: Does this belong in a class?
-def update(steering: SteeringOutput, max_speed: float, time: float):
+def steering_update(steering: SteeringOutput, max_speed: float, time: float):
   ''' Updates character’s movement variables
       - Outputs: New values for position, orientation, velocity, rotation
       - Inputs: linear and angular accelerations
@@ -151,6 +189,11 @@ def update(steering: SteeringOutput, max_speed: float, time: float):
     normalized_velocity = normalize(velocity)
     normalized_velocity *= max_speed
 
+def steering_continue(character):
+  # Continue moving without changing velocity or orientation
+  result = [character["velocity_x"], character["velocity_z"], character["orientation"]]
+  return result
+
 #------------------------------------------------------------------------------#
 #                              Movement Behaviors                              #
 #------------------------------------------------------------------------------#
@@ -163,16 +206,16 @@ class DynamicSeek:
     - Determine direction to target
     - Accelerate in that direction at max rate up to max speed
   '''
-  def __init__(self, steering: character_3):
+  def __init__(self, character):
     '''
     Args:
       character: position and orientation for character -> kinematic
       target: position and orientation for target -> kinematic
       max_acceleration: maximum acceleration rate for character -> float 
     '''
-    self.character = (ch.position, steering.orientation)
+    self.kinematic = (character["inital_position"], character["inital_orientation"])
     self.target = (steering.position, steering.orientation)
-    self.max_acceleration = steering.max_acceleration
+    self.max_acceleration = character["max_acceleration"]
     self.result = (steering.linear, steering.angular)
 
   def get_steering(self) -> SteeringOutput:
@@ -180,14 +223,14 @@ class DynamicSeek:
     result = SteeringOutput()
 
     # Get the direction to the target
-    result[1] = self.target[1] - self.character[2]
+    result[0] = self.target[0] - self.kinematic[0]
 
     # Accelerate at maximum rate
-    result[1] = normalize(result[1])
+    result[0] = normalize(result[0])
     result[1] *= self.max_acceleration
 
     # Output steering
-    result[2] = 0
+    result[1] = 0
     output.write(result)
     return result
 
@@ -199,14 +242,14 @@ class DynamicFlee:
     - Determine direction to target
     - Accelerate in opposite direction at max rate up to max speed
   '''
-  def __init__(self, steering: SteeringOutput):
+  def __init__(self, character):
     '''
     Args:
       character: position and orientation for character -> kinematic
       target: position and orientation for target -> kinematic
       max_acceleration: maximum acceleration rate for character -> float 
     '''
-    self.character = (steering.position, steering.orientation) 
+    self.kinematic = (character["inital_position"], character["inital_orientation"]) 
     self.target = (steering.position, steering.orientation)
     self.max_acceleration = steering.max_acceleration
     self.result = (steering.linear, steering.angular)
@@ -216,7 +259,7 @@ class DynamicFlee:
     result = SteeringOutput()
 
     # Get the direction to the target
-    result.linear = self.character.position - self.target.position
+    result.linear = self.kinematic[0] - self.target[0]
 
     # Accelerate at maximum rate
     result.linear.normalize()
@@ -298,6 +341,5 @@ class DynamicArrive:
     # Output steering
     result.angular = 0
     return result
-  
 
 output.close()
