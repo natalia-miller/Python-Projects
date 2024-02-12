@@ -21,6 +21,7 @@ The following code has been adapted from psuedocode:
 ''' 
 
 import math
+
 import numpy as np 
 from matplotlib import pyplot as plt
 
@@ -49,10 +50,10 @@ def normalize(vector):
   normalized_vector = vector / np.linalg.norm(vector)
   return normalized_vector
 
+
 #------------------------------------------------------------------------------#
 #                           Character Initializations                          #
 #------------------------------------------------------------------------------#
-
 character_1 = {
   "id": 2601,
 	"steering_behavior": "Continue",
@@ -77,13 +78,14 @@ character_1 = {
   "collision_status": False
 }
 
+
 character_2 = {
 	"id": 2602,
 	"steering_behavior": "Flee",
   "steering_behavior_code": "7",
 	"inital_position": (-30, -50),
 	"inital_velocity": (2, 7),
-	"inital_orientation": np.pi/4,
+	"inital_orientation": math.radians(45),
 	"max_velocity": 8,
 	"max_acceleration": 1.5,
 	"target": 1,				 
@@ -97,9 +99,10 @@ character_2 = {
   "velocity_z": 7,
   "linear_acceleration_x": 0,
   "linear_acceleration_z": 0,
-  "orientation": np.pi/4,
+  "orientation": math.radians(45),
   "collision_status": False
 }
+
 
 character_3 = {
 	"id": 2603,
@@ -107,7 +110,7 @@ character_3 = {
   "steering_behavior_code": "6",
 	"inital_position": (-50, 40),
 	"inital_velocity": (0, 8),
-	"inital_orientation": (3(np.pi))/2,
+	"inital_orientation": math.radians(270),
 	"max_velocity": 8,
 	"max_acceleration": 2,
 	"target": 1,				 
@@ -121,9 +124,10 @@ character_3 = {
   "velocity_z": 8,
   "linear_acceleration_x": 0,
   "linear_acceleration_z": 0,
-  "orientation": (3(np.pi))/2,
+  "orientation": math.radians(270),
   "collision_status": False
 }
+
 
 character_4 = {
 	"id": 2604,
@@ -131,7 +135,7 @@ character_4 = {
   "steering_behavior_code": "8",
 	"inital_position": (50, 75),
 	"inital_velocity": (-9, 4),
-	"inital_orientation": np.pi,
+	"inital_orientation": math.radians(180),
 	"max_velocity": 10,
 	"max_acceleration": 2,
 	"target": 1,				 
@@ -145,9 +149,10 @@ character_4 = {
   "velocity_z": 4,
   "linear_acceleration_x": 0,
   "linear_acceleration_z": 0,
-  "orientation": np.pi,
+  "orientation": math.radians(180),
   "collision_status": False			 
 }
+
 
 #------------------------------------------------------------------------------#
 #                              Steering Behaviors                              #
@@ -169,9 +174,27 @@ class SteeringOutput:
     '''
     self.linear = 0 
     self.angular = 0
+    self.position = 0
+    self.orientation = 0
+    self.max_acceleration = 0
+
+  def output_steering(character):
+    with open(r"C:\Users\nmiller\OneDrive - EOS DS USA\Documents\output.txt", "a") as f:
+        print('Number one portal is {0}, {1}, and {other}.'.format('Geeks', 'For', other ='Geeks'))
+        print('{}, '.format(character["timestep"]) +
+            '{}, '.format(character["id"]) +
+            '{}, '.format(character["position_x"]) +
+            '{}, '.format(character["position_z"]) +
+            '{}, '.format(character["velocity_x"]) +
+            '{}, '.format(character["velocity_z"]) +
+            '{}, '.format(character["linear_acceleration_x"]) +
+            '{},'.format(character["linear_acceleration_z"]) +
+            '{}, '.format(character["orientation"]) +
+            '{}, '.format(character["steering_behavior_code"]) +
+            '{}, '.format(character["collision_status"]), file = f)
 
 # TODO: Does this belong in a class?
-def steering_update(steering: SteeringOutput, max_speed: float, time: float):
+def steering_update(character, steering: SteeringOutput, max_speed: float, time: float):
   ''' Updates character’s movement variables
       - Outputs: New values for position, orientation, velocity, rotation
       - Inputs: linear and angular accelerations
@@ -195,10 +218,10 @@ def steering_continue(character):
   result = [character["velocity_x"], character["velocity_z"], character["orientation"]]
   return result
 
+
 #------------------------------------------------------------------------------#
 #                              Movement Behaviors                              #
 #------------------------------------------------------------------------------#
-
 class DynamicSeek:
   ''' 
   Move directly towards target as fast as possible
@@ -207,7 +230,7 @@ class DynamicSeek:
     - Determine direction to target
     - Accelerate in that direction at max rate up to max speed
   '''
-  def __init__(self, character):
+  def __init__(self, character, steering = SteeringOutput):
     '''
     Args:
       character: position and orientation for character -> kinematic
@@ -219,7 +242,7 @@ class DynamicSeek:
     self.max_acceleration = character["max_acceleration"]
     self.result = (steering.linear, steering.angular)
 
-  def get_steering(self) -> SteeringOutput:
+  def get_steering_seek(self) -> SteeringOutput:
     # Create output structure
     result = SteeringOutput()
 
@@ -232,8 +255,8 @@ class DynamicSeek:
 
     # Output steering
     result[1] = 0
-    output.write(result)
     return result
+
 
 class DynamicFlee:
   ''' 
@@ -243,7 +266,7 @@ class DynamicFlee:
     - Determine direction to target
     - Accelerate in opposite direction at max rate up to max speed
   '''
-  def __init__(self, character):
+  def __init__(self, character, steering = SteeringOutput):
     '''
     Args:
       character: position and orientation for character -> kinematic
@@ -260,15 +283,16 @@ class DynamicFlee:
     result = SteeringOutput()
 
     # Get the direction to the target
-    result.linear = self.kinematic[0] - self.target[0]
+    result[1] = self.kinematic[0] - self.target[0]
 
     # Accelerate at maximum rate
-    result.linear.normalize()
-    result.linear *= self.max_acceleration
+    result[1] = normalize(result[1])
+    result[1] *= self.max_acceleration
 
     # Output steering
-    result.angular = 0
+    result[2] = 0
     return result
+
 
 class DynamicArrive:
   ''' 
@@ -342,21 +366,3 @@ class DynamicArrive:
     # Output steering
     result.angular = 0
     return result
-  
-def output_steering(character):
-
-    with open(r"C:\Users\nmiller\OneDrive - EOS DS USA\Documents\output.txt", "a") as f:
-        print('Number one portal is {0}, {1}, and {other}.'.format('Geeks', 'For', other ='Geeks'))
-        print('{}, '.format(character["timestep"]) +
-            '{}, '.format(character["id"]) +
-            '{}, '.format(character["position_x"]) +
-            '{}, '.format(character["position_z"]) +
-            '{}, '.format(character["velocity_x"]) +
-            '{}, '.format(character["velocity_z"]) +
-            '{}, '.format(character["linear_acceleration_x"]) +
-            '{}'.format(character["linear_acceleration_z"]) +
-            '{}, '.format(character["orientation"]) +
-            '{}, '.format(character["steering_behavior_code"]) +
-            '{}, '.format(character["collision_status"]), file = f)
-
-
