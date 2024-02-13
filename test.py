@@ -6,6 +6,8 @@ from matplotlib import pyplot as plt
 
 output_file = r"C:\Users\nmiller\OneDrive - EOS DS USA\Documents\output.txt"
 
+# The movement target of the Flee, Seek, and Arrive characters is the Continue character.
+
 #------------------------------------------------------------------------------#
 #                           Character Initializations                          #
 #------------------------------------------------------------------------------#
