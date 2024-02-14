@@ -1,6 +1,8 @@
 import math
 import time
 
+# https://github.com/bsp0015/CS330-Program-One---Two/blob/main/PA1-CS330/main.cpp
+
 import numpy as np 
 from matplotlib import pyplot as plt
 
