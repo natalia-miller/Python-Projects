@@ -1,6 +1,14 @@
+# Natalia Miller
+
+'''
+The following code has been adapted from psuedocode:
+    I. Millington, Artificial Intelligence for Games, Third Edition,
+    CRC Press, Boca Raton FL, 2019
+''' 
+
 import math
 
-output_file = r"C:\Users\nmiller\OneDrive - EOS DS USA\Documents\Vector\output.txt"
+output_file = r"output.txt"
 
 
 
