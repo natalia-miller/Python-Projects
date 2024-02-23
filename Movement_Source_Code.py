@@ -9,15 +9,19 @@ The following code has been adapted from psuedocode:
 import math
 
 output_file = r"output.txt"
-
+timestep = 0.5
 
 
 #------------------------------------------------------------------------------#
 #                               Vector Functions                               #
 #------------------------------------------------------------------------------#
 def length(vector):
+    '''
+    Calculates the length/magnitude of a vector
+    '''
     length = math.sqrt((vector[0]*vector[0]) + (vector[1]*vector[1]))
     return length
+
 
 def normalize(vector):
     '''
@@ -25,12 +29,32 @@ def normalize(vector):
     '''
     magnitude = length(vector)
 
-    if (len(vector) != 0 and magnitude != 0):
+    if (magnitude != 0):
         normalized_x = vector[0] / magnitude
         normalized_z = vector[1] / magnitude
         return [normalized_x, normalized_z]
     else:
         return [0,0]
+
+
+def subtract(vector_1, vector_2):
+    '''
+    Subtracts two vectors
+    '''
+    result = [0, 0]
+    result[0] = vector_1[0] - vector_2[0]
+    result[1] = vector_1[1] - vector_2[1]
+    return result
+
+
+def scalar_multiply(vector_1, scalar):
+    '''
+    Multiplies a vector by a scalar
+    '''
+    result = [0, 0]
+    result[0] = vector_1[0] * scalar
+    result[1] = vector_1[1] * scalar
+    return result
     
 
 #------------------------------------------------------------------------------#
@@ -52,7 +76,7 @@ def steering_update(character):
     rotation = 0
     angular = [0,0]
     max_velocity = character["max_velocity"]
-    time = character["timestep"]
+    time = timestep
     character_id = character["id"]
     linear_acceleration = character["linear_acceleration"]
     if not linear_acceleration:
@@ -71,7 +95,7 @@ def steering_update(character):
     # Check for speed above max and clip 
     if length(velocity) > max_velocity:
         normalized_velocity = normalize(velocity)
-        normalized_velocity *= max_velocity
+        normalized_velocity = scalar_multiply(normalized_velocity, max_velocity)
         velocity = normalized_velocity
     
     # Update character position, orientation, and velocity
@@ -79,10 +103,18 @@ def steering_update(character):
         character_1["position"] = position
         character_1["orientation"] = orientation
         character_1["velocity"] = velocity
+    if (character_id == 2602):
+        character_2["position"] = position
+        character_2["orientation"] = orientation
+        character_2["velocity"] = velocity
     if (character_id == 2603):
         character_3["position"] = position
         character_3["orientation"] = orientation
         character_3["velocity"] = velocity
+    if (character_id == 2604):
+        character_4["position"] = position
+        character_4["orientation"] = orientation
+        character_4["velocity"] = velocity
 
 
 def get_steering_continue(character):
@@ -98,13 +130,11 @@ def get_steering_seek(character, target):
     linear_result = [0, 0]
 
     # Get the direction to the target
-    linear_result[0] = target_position[0] - character_position[0]
-    linear_result[1] = target_position[1] - character_position[1]
+    linear_result = subtract(target_position, character_position)
 
     # Accelerate at maximum rate
     linear_result = normalize(linear_result)
-    linear_result[0] *= max_acceleration
-    linear_result[1] *= max_acceleration
+    linear_result = scalar_multiply(linear_result, max_acceleration)
 
     # Output steering
     return linear_result
@@ -117,61 +147,54 @@ def get_steering_flee(character, target):
     linear_result = [0, 0]
 
     # Get the direction to the target
-    linear_result[0] =  character_position[0] - target_position[0]
-    linear_result[1] =  character_position[1] - target_position[1]
+    linear_result = subtract(character_position, target_position)
 
     # Accelerate at maximum rate
     linear_result = normalize(linear_result)
-    linear_result[0] *= max_acceleration
-    linear_result[1] *= max_acceleration
+    linear_result = scalar_multiply(linear_result, max_acceleration)
 
     # Output steering
-    return linear_result[0], linear_result[1]
+    return linear_result
 
 
 def get_steering_arrive(character, target):
     character_position = character["position"]
     target_position = target["position"]
     max_acceleration = character["max_acceleration"]
+    linear_result = [0, 0]
     target_radius = character["arrival_radius"]
     slow_radius = character["slowing_radius"]
     time_to_target = character["time_to_target"]
     character_velocity = character["velocity"]
     target_speed = 0
-    linear_result = [0, 0]
-    
-    direction = target_position - character_position
-    distance = length(direction)
-    # max_speed = length / time_to_target
     max_speed = character["max_velocity"]
-
+    direction = subtract(target_position, character_position)
+    distance = length(direction)
+    
     # Test for arrival
     if distance < target_radius:
-        # return None
-        target_speed = 0
+        return None
 
     # Outside slowing-down (outer) radius, move at max speed
     if distance > slow_radius:
-        target_speed = max_speed
+        target_speed = character["max_velocity"]
     # Between radii, scale speed to slow down
     else:
         target_speed = max_speed * distance / slow_radius
 
     # Target velocity combines speed and direction
-    target_velocity = direction
-    target_velocity = normalize(target_velocity)
-    target_velocity *= target_speed
+    target_velocity = normalize(direction)
+    target_velocity = scalar_multiply(target_velocity, target_speed)
 
     # Accelerate to target velocity
-    linear_result = target_velocity - character_velocity
-    linear_result[0] /= time_to_target
-    linear_result[1] /= time_to_target
+    linear_result = subtract(target_velocity, character_velocity)
+    linear_result[0] = linear_result[0] / time_to_target
+    linear_result[1] = linear_result[1] / time_to_target
 
     # Test for too fast acceleration
     if length(linear_result) > max_acceleration:
         linear_result = normalize(linear_result)
-        linear_result[0] *= max_acceleration
-        linear_result[1] *= max_acceleration
+        linear_result = scalar_multiply(linear_result, max_acceleration)
 
     # Output steering
     return linear_result
@@ -200,6 +223,7 @@ def output_steering(character):
             '{},'.format(character["steering_behavior_code"]) +
             '{}'.format(character["collision_status"]), file = f)
 
+
 #------------------------------------------------------------------------------#
 #                           Character Initializations                          #
 #------------------------------------------------------------------------------#
@@ -207,9 +231,9 @@ character_1 = {
     "id": 2601,
 	"steering_behavior": "Continue",
     "steering_behavior_code": "1",
-    "inital_position": [0, 0],
-	"inital_velocity": [0, 0],
-	"inital_orientation": 0,
+    "position": [0, 0],
+	"velocity": [0, 0],
+	"orientation": 0,
 	"max_velocity": 0,
 	"max_acceleration": 0,
 	"target": 0,				 
@@ -217,12 +241,8 @@ character_1 = {
     "slowing_radius": 0,
     "time_to_target": 0,
     "timestep": 0,
-    "velocity": [0, 0],
     "linear_acceleration": [0, 0],
-    "acceleration": 0,
-    "orientation": 0,
     "collision_status": False,
-    "position": [0, 0],
 }
 
 
@@ -230,9 +250,9 @@ character_2 = {
 	"id": 2602,
 	"steering_behavior": "Flee",
     "steering_behavior_code": "7",
-	"inital_position": [-30, -50],
-	"inital_velocity": [2.0, 7.0],
-	"inital_orientation": math.radians(45),
+	"position": [-30, -50],
+	"velocity": [2, 7],
+	"orientation": math.radians(45),
 	"max_velocity": 8,
 	"max_acceleration": 1.5,
     "target": 1,				 
@@ -240,11 +260,7 @@ character_2 = {
     "slowing_radius": 0,
     "time_to_target": 0,		
     "timestep": 0,
-    "position": [-30, -50],
-    "velocity": [2, 7],
     "linear_acceleration": [0, 0],
-    "acceleration": 0,
-    "orientation": math.radians(45),
     "collision_status": False,
 }
 
@@ -253,9 +269,9 @@ character_3 = {
 	"id": 2603,
 	"steering_behavior": "Seek",
     "steering_behavior_code": "6",
-	"inital_position":[-50, 40],
-	"inital_velocity": [0, 8],
-	"inital_orientation": math.radians(270),
+	"position":[-50, 40],
+	"velocity": [0, 8],
+	"orientation": math.radians(270),
 	"max_velocity": 8,
 	"max_acceleration": 2,
 	"target": 1,				 
@@ -263,12 +279,8 @@ character_3 = {
     "slowing_radius": 0,
     "time_to_target": 0,
     "timestep": 0,
-    "velocity": [0, 8],
     "linear_acceleration": [0, 0],
-    "acceleration": 0,
-    "orientation": math.radians(270),
     "collision_status": False,
-    "position": [-50, 40],
 }
 
 
@@ -276,21 +288,17 @@ character_4 = {
 	"id": 2604,
 	"steering_behavior": "Arrive",
     "steering_behavior_code": "8",
-	"inital_position": [50, 75],
-	"inital_velocity": [-9, 4],
-	"inital_orientation": math.radians(180),
+	"position": [50, 75],
+	"velocity": [-9, 4],
+	"orientation": math.radians(180),
 	"max_velocity": 10,
 	"max_acceleration": 2,
 	"target": 1,				 
     "arrival_radius": 4,
     "slowing_radius": 32,
-    "time_to_target": 1,
+    "time_to_target": 1.0,
     "timestep": 0,
-    "position": [50, 75],
-    "velocity": [-9, 4],
     "linear_acceleration": [0, 0],
-    "acceleration": 0,
-    "orientation": math.radians(180),
     "collision_status": False			 
 }
 
@@ -305,13 +313,13 @@ output_steering(character_2)
 output_steering(character_3)
 output_steering(character_4)
 
-for x in range(8):
+for x in range(100):
 
     # Increase timestep by 0.5
-    character_1["timestep"] += 0.5
-    character_2["timestep"] += 0.5
-    character_3["timestep"] += 0.5
-    character_4["timestep"] += 0.5
+    character_1["timestep"] += timestep
+    character_2["timestep"] += timestep
+    character_3["timestep"] += timestep
+    character_4["timestep"] += timestep
 
     # Call the character's steering movement behavior
     character_1["linear_acceleration"] = get_steering_continue(character_1)
