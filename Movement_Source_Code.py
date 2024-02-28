@@ -13,7 +13,7 @@ timestep = 0.5
 
 
 #------------------------------------------------------------------------------#
-#                               Vector Functions                               #
+#                              Geometry Functions                              #
 #------------------------------------------------------------------------------#
 def length(vector):
     '''
@@ -55,7 +55,59 @@ def scalar_multiply(vector_1, scalar):
     result[0] = vector_1[0] * scalar
     result[1] = vector_1[1] * scalar
     return result
-    
+
+
+def dot(vector_1, vector_2):
+    result = (vector_1[0] * vector_2[0]) + (vector_1[1] * vector_2[1])
+    return result
+
+
+def closest_point(query_point, point_a, point_b):
+    '''
+    Find point on segement closest to query point
+    '''
+    q_a = subtract(query_point, point_a)
+    b_a = subtract(point_b, point_a)
+    vector_dot_1 = dot(q_a, b_a)
+    vector_dot_2 = dot(b_a, b_a)
+    t = vector_dot_1 / vector_dot_2
+    var_1 = t * b_a[0]
+    var_2 = t * b_a[1]
+    return [point_a[0] + var_1, point_a[1] + var_2] 
+
+
+def closest_point_segment(query_point, point_a, point_b):
+    '''
+    Find point on segment closest to query point in 2D
+    '''
+    q_a = subtract(query_point, point_a)
+    b_a = subtract(point_b, point_a)
+    vector_dot_1 = dot(q_a, b_a)
+    vector_dot_2 = dot(b_a, b_a)
+    t = vector_dot_1 / vector_dot_2
+
+    if t <= 0:
+        return point_a
+    elif t >= 1:
+        return point_b
+    else:
+        var_1 = t * b_a[0]
+        var_2 = t * b_a[1]
+        return [point_a[0] + var_1, point_a[1] + var_2] 
+
+
+#------------------------------------------------------------------------------#
+#                                Path Operations                               #
+#------------------------------------------------------------------------------#
+def get_position(param):
+    # Calculate position on path, given path parameter
+    return [0, 0] # vector
+
+
+def get_param(position, last_param):
+    # Calculate path parameter, given position on or off path
+    return 0.0 # float
+
 
 #------------------------------------------------------------------------------#
 #                              Movement Functions                              #
@@ -200,6 +252,28 @@ def get_steering_arrive(character, target):
     return linear_result
 
 
+def follow_path(character, target, path):
+    character_position = character["position"]
+    target_position = target["position"]
+    linear_result = [0, 0]
+    path = character["path_to_follow"] # Path to follow
+    path_offset = character["path_offset"] # Distance farther along path to place target
+    current_param: float # Current position on the path, as a path parameter
+	
+	# Calculate target to delegate to Seek
+	# Find current position on path
+    currentParam = path.getParam(character_position, currentParam)  
+		
+	# Offset it
+    targetParam = currentParam + path_offset
+		
+	# Get the target position
+    target_position = path.getPosition(targetParam)
+		
+	# Delegate to seek
+    return get_steering_seek(character, target) # Delegate offset target to seek
+
+
 def output_steering(character):
     position = character["position"]
     velocity = character["velocity"]
@@ -302,6 +376,26 @@ character_4 = {
     "collision_status": False			 
 }
 
+
+character_5 = {
+    "id": 2701,
+	"steering_behavior": "Follow path",
+    "steering_behavior_code": "11",
+    "position": [20, 95],
+	"velocity": [0, 0],
+	"orientation": 0,
+	"max_velocity": 4,
+	"max_acceleration": 2,
+	"target": 0,				 
+    "arrival_radius": 0,
+    "slowing_radius": 0,
+    "time_to_target": 0,
+    "timestep": 0,
+    "linear_acceleration": [0, 0],
+    "collision_status": False,
+    "path_to_follow": 1,
+    "path_offset": 0.04
+}
 
 #------------------------------------------------------------------------------#
 #                                 Main Method                                  #
