@@ -7,6 +7,7 @@ The following code has been adapted from psuedocode:
 ''' 
 
 import math
+import numpy as np
 
 output_file = r"output.txt"
 timestep = 0.5
@@ -16,17 +17,13 @@ timestep = 0.5
 #                              Geometry Functions                              #
 #------------------------------------------------------------------------------#
 def length(vector):
-    '''
-    Calculates the length/magnitude of a vector
-    '''
+    # Calculates the length/magnitude of a vector
     length = math.sqrt((vector[0]*vector[0]) + (vector[1]*vector[1]))
     return length
 
 
 def normalize(vector):
-    '''
-    Normalizes a vector
-    '''
+    # Normalizes a vector
     magnitude = length(vector)
 
     if (magnitude != 0):
@@ -38,9 +35,7 @@ def normalize(vector):
 
 
 def subtract(vector_1, vector_2):
-    '''
-    Subtracts two vectors
-    '''
+    # Subtracts two vectors
     result = [0, 0]
     result[0] = vector_1[0] - vector_2[0]
     result[1] = vector_1[1] - vector_2[1]
@@ -48,9 +43,7 @@ def subtract(vector_1, vector_2):
 
 
 def scalar_multiply(vector_1, scalar):
-    '''
-    Multiplies a vector by a scalar
-    '''
+    # Multiplies a vector by a scalar
     result = [0, 0]
     result[0] = vector_1[0] * scalar
     result[1] = vector_1[1] * scalar
@@ -58,14 +51,13 @@ def scalar_multiply(vector_1, scalar):
 
 
 def dot(vector_1, vector_2):
+    # Calculates the dot product of two vectors
     result = (vector_1[0] * vector_2[0]) + (vector_1[1] * vector_2[1])
     return result
 
 
 def closest_point(query_point, point_a, point_b):
-    '''
-    Find point on segement closest to query point
-    '''
+    # Find point on segement closest to query point
     q_a = subtract(query_point, point_a)
     b_a = subtract(point_b, point_a)
     vector_dot_1 = dot(q_a, b_a)
@@ -77,9 +69,7 @@ def closest_point(query_point, point_a, point_b):
 
 
 def closest_point_segment(query_point, point_a, point_b):
-    '''
-    Find point on segment closest to query point in 2D
-    '''
+    # Find point on segment closest to query point in 2D
     q_a = subtract(query_point, point_a)
     b_a = subtract(point_b, point_a)
     vector_dot_1 = dot(q_a, b_a)
@@ -96,17 +86,64 @@ def closest_point_segment(query_point, point_a, point_b):
         return [point_a[0] + var_1, point_a[1] + var_2] 
 
 
+def distance(point_x, point_z):
+    # Find the distance between two points
+    x_start = point_x[0]
+    x_end = point_x[1]
+    z_start = point_z[0]
+    z_end = point_z[1]
+
+	# dist = numpy.linalg.norm(a-b)
+    return math.sqrt((pow((x_end - x_start), 2)) + (pow((z_end - z_start), 2)))
+
+
 #------------------------------------------------------------------------------#
 #                                Path Operations                               #
 #------------------------------------------------------------------------------#
-def get_position(param):
-    # Calculate position on path, given path parameter
-    return [0, 0] # vector
+def get_position(path, param):   
+    val = np.max(np.where(param > path)) 
+    a_path_param = np.array([np.where(path[0] == val[0]), np.where(path[1] == val[1])])  
+    b_path_param = np.array([np.where(path[0] == val[0]) + 1, np.where(path[1] == val[1]) + 1]) 
+
+    difference_1 = subtract(param, a_path_param)
+    difference_2 = subtract(b_path_param, a_path_param)
+
+    t_var = np.divide(difference_1, difference_2)
+          
+    position = a_path_param + np.multiply(t_var, difference_2)
+
+    return(position)  
 
 
-def get_param(position, last_param):
-    # Calculate path parameter, given position on or off path
-    return 0.0 # float
+def get_param(path, position):
+    # Find point on path closest to given position
+    closest_distance = float('inf')
+    closest_point = 0
+    closest_segment = 0
+
+    for i in path:
+        a_path = np.array([np.where(path[0] == i[0]), np.where(path[1] == i[1])])
+        b_path = np.array([np.where(path[0] == i[0]) + 1, np.where(path[1] == i[1]) + 1])
+        check_point = closest_point_segment(position, a_path, b_path) 
+        check_distance = distance(position, check_point)  
+    
+        if check_distance < closest_distance:
+            closest_distance = check_point
+            closest_distance = check_distance
+            closest_segment = i
+	
+    # Calculate path parameter of closest point.  
+    a_path_param = np.array([np.where(path[0] == closest_segment[0]), np.where(path[1] == closest_segment[1])])
+    b_path_param = np.array([np.where(path[0] == (closest_segment[0] + 1)), np.where(path[1] == (closest_segment[1] + 1))])
+    c_path_param = closest_point  
+
+    difference_1 = subtract(c_path_param, a_path_param)
+    difference_2 = subtract(b_path_param, a_path_param)
+
+    t_var = np.divide(length(difference_1), length(difference_2))  
+    c_param = a_path_param + np.multiply(t_var, difference_2)  
+     
+    return(c_param)  
 
 
 #------------------------------------------------------------------------------#
@@ -252,23 +289,21 @@ def get_steering_arrive(character, target):
     return linear_result
 
 
-def follow_path(character, target, path):
-    character_position = character["position"]
-    target_position = target["position"]
-    linear_result = [0, 0]
-    path = character["path_to_follow"] # Path to follow
+def follow_path(character, character_path):
+    # Calculate target to delegate to Seek
+    character_position = character["position"] # Current position on the path, as a path parameter
     path_offset = character["path_offset"] # Distance farther along path to place target
-    current_param: float # Current position on the path, as a path parameter
 	
-	# Calculate target to delegate to Seek
 	# Find current position on path
-    currentParam = path.getParam(character_position, currentParam)  
+    currentParam = get_param(character_path, character_position)  
 		
 	# Offset it
-    targetParam = currentParam + path_offset
+    target_param = min(1, currentParam + path_offset)
 		
 	# Get the target position
-    target_position = path.getPosition(targetParam)
+    target_position = get_position(character_path, target_param)
+
+    target = {"target_position": target_position}
 		
 	# Delegate to seek
     return get_steering_seek(character, target) # Delegate offset target to seek
@@ -396,6 +431,18 @@ character_5 = {
     "path_to_follow": 1,
     "path_offset": 0.04
 }
+
+
+character_path = np.array(
+    [0, 90], 
+    [-20, 65], 
+    [20, 40], 
+    [-40, 15], 
+    [40, -10], 
+    [-60, -35], 
+    [60, -60], 
+    [0, -85]
+    )
 
 #------------------------------------------------------------------------------#
 #                                 Main Method                                  #
