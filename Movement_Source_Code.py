@@ -186,17 +186,17 @@ def get_param(character_path, character_position):
     return(c_param)  
 
 
-def get_position(path, param):
+def get_position(path, target_param):
     path_x = path["x"]
     path_y = path["y"]
     path_param = path["param"]
 
-    i = int(which_greater_than(param, path_param))
+    i = int(which_greater_than(target_param, path_param))
     endpoint_a = [path_x[i], path_y[i]]
     endpoint_b = [path_x[i + 1], path_y[i + 1]] 
-    T = (param - path_param[i]) / (path_param[i + 1] - path_param[i])
+    T = (target_param - path_param[i]) / (path_param[i + 1] - path_param[i])
     position = endpoint_a + scalar_multiply(subtract(endpoint_b, endpoint_a), T)
-    return(position)  
+    return(position)   
 
 
 #------------------------------------------------------------------------------#
@@ -355,7 +355,7 @@ def follow_path(character, character_path):
     currentParam = get_param(character_path, character_position)  
 		
 	# Offset it
-    target_param = min(1, currentParam + path_offset)
+    target_param = currentParam + path_offset
 		
 	# Get the target position
     target_position = get_position(character_path, target_param)
@@ -364,6 +364,7 @@ def follow_path(character, character_path):
 		
 	# Delegate to seek
     return get_steering_seek(character, target) # Delegate offset target to seek
+
 
 
 def output_steering(character):
@@ -484,7 +485,7 @@ character_5 = {
     "time_to_target": 0,
     "timestep": 0,
     "linear_acceleration": [0, 0],
-    "collision_status": False,
+    "collision_status": "FALSE",
     "path_to_follow": 1,
     "path_offset": 0.04
 }
