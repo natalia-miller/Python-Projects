@@ -7,7 +7,6 @@ The following code has been adapted from psuedocode:
 ''' 
 
 import math
-import numpy as np
 
 output_file = r"output.txt"
 timestep = 0.5
@@ -19,6 +18,7 @@ timestep = 0.5
 def length(vector):
     # Calculates the length/magnitude of a vector
     length = math.sqrt((vector[0]*vector[0]) + (vector[1]*vector[1]))
+
     return length
 
 
@@ -39,6 +39,16 @@ def subtract(vector_1, vector_2):
     result = [0, 0]
     result[0] = vector_1[0] - vector_2[0]
     result[1] = vector_1[1] - vector_2[1]
+
+    return result
+
+
+def multiply(vector_1, vector_2):
+    # Subtracts two vectors
+    result = [0, 0]
+    result[0] = vector_1[0] * vector_2[0]
+    result[1] = vector_1[1] * vector_2[1]
+
     return result
 
 
@@ -47,12 +57,23 @@ def scalar_multiply(vector_1, scalar):
     result = [0, 0]
     result[0] = vector_1[0] * scalar
     result[1] = vector_1[1] * scalar
+
+    return result
+
+
+def scalar_addition(vector_1, scalar):
+    # Adds a scalar value each element of a vector
+    result = [0, 0]
+    result[0] = vector_1[0] + scalar
+    result[1] = vector_1[1] + scalar
+
     return result
 
 
 def dot(vector_1, vector_2):
     # Calculates the dot product of two vectors
     result = (vector_1[0] * vector_2[0]) + (vector_1[1] * vector_2[1])
+
     return result
 
 
@@ -65,6 +86,7 @@ def closest_point(query_point, point_a, point_b):
     t = vector_dot_1 / vector_dot_2
     var_1 = t * b_a[0]
     var_2 = t * b_a[1]
+
     return [point_a[0] + var_1, point_a[1] + var_2] 
 
 
@@ -88,68 +110,89 @@ def closest_point_segment(query_point, point_a, point_b):
 
 def distance(point_x, point_z):
     # Find the distance between two points
-    x_start = point_x[0]
-    x_end = point_x[1]
-    z_start = point_z[0]
-    z_end = point_z[1]
 
-	# dist = numpy.linalg.norm(a-b)
-    return math.sqrt((pow((x_end - x_start), 2)) + (pow((z_end - z_start), 2)))
+    return math.sqrt((pow((point_z[0] - point_x[0]), 2)) + (pow((point_z[1] - point_x[1]), 2)))
+
+
+def where_greater_than(a, b):
+    for i in range(len(b)):
+        if a > b[i]:
+            return b[i]
 
 
 #------------------------------------------------------------------------------#
 #                                Path Operations                               #
 #------------------------------------------------------------------------------#
-def get_position(path_x, path_z, param):   
-    val_x = np.max(np.where(param[0] > path_x)) 
-    val_y = np.max(np.where(param[1] > path_z)) 
-    a_path_param = np.array([np.where(path_x == val_x), np.where(path_z == val_y)])  
-    b_path_param = np.array([np.where(path_x == val_x) + 1, np.where(path_z == val_y) + 1]) 
+def path_assemble(path_x, path_y):
+    path_segments = len(path_x) - 1
+    path_distance = [0, 0, 0, 0, 0, 0, 0, 0]
 
-    difference_1 = subtract(param, a_path_param)
-    difference_2 = subtract(b_path_param, a_path_param)
+    for i in range(len(path_distance)):
+        if i == 0:
+            continue
+        else:
+            path_distance[i] = path_distance[i - 1] + distance([path_x[i - 1], path_y[i - 1]], [path_x[i], path_y[i]])
 
-    t_var = np.divide(difference_1, difference_2)
-          
-    position = a_path_param + np.multiply(t_var, difference_2)
+    path_param = [0, 0, 0, 0, 0, 0, 0, 0]
 
-    return(position)  
+    for i in range(len(path_distance)):
+        path_param[i] = path_distance[i] / max(path_distance)
+    
+        assembled_path = {
+            "x": path_x,
+            "y": path_y,
+            "distance": path_distance,
+            "param": path_param,
+            "segments": path_segments
+        }
+
+    return assembled_path
 
 
-def get_param(path_x, path_z, position):
-    # Find point on path closest to given position
+def get_param(character_path, character_position):
+    # Find point on path closest to given position.  
     closest_distance = float('inf')
-    closest_point = 0
-    closest_segment = 0
+    closest_segment = 0 # index of closest segment
+    closest_point = [0, 0] 
+    path_segments = character_path["segments"]
+    path_param = character_path["param"]
+    path_x = character_path["x"]
+    path_y = character_path["y"]
 
-    for index, x in enumerate(path_x):
-        print(index)
-        a_path = np.array([path_x[index], path_z[index]])
-
-        if index != 8:
-            b_path = np.array([path_x[index], path_z[index]])
-
-        check_point = closest_point_segment(position, a_path, b_path) 
-        check_distance = distance(position, check_point)  
-    
-        if check_distance < closest_distance:
-            closest_distance = check_point
-            closest_distance = check_distance
-            closest_segment = index
-	
+    for i in range(0, path_segments):
+        endpoint_a = [path_x[i], path_y[i]]
+        endpoint_b = [path_x[i + 1], path_y[i + 1]] 
+        check_point = closest_point_segment(character_position, endpoint_a, endpoint_b)  
+        check_distance = distance(character_position, check_point)  
+        if (check_distance < closest_distance):
+            closest_point = check_point  
+            closest_distance = check_distance  
+            closest_segment = i  
+               
     # Calculate path parameter of closest point.  
-    a_path_param = np.array([np.where(path_x == closest_segment[0]), np.where(path_z == closest_segment[1])])
-    b_path_param = np.array([np.where(path_x == (closest_segment[0] + 1)), np.where(path_z == (closest_segment[1] + 1))])
-    
-    c_path_param = closest_point  
+    endpoint_a = [path_x[closest_segment], path_y[closest_segment]]  
+    a_param = path_param[closest_segment]  
+    endpoint_b = [path_x[closest_segment + 1], path_y[closest_segment + 1]]
+    b_param = path_param[closest_segment + 1]  
 
-    difference_1 = subtract(c_path_param, a_path_param)
-    difference_2 = subtract(b_path_param, a_path_param)
-
-    t_var = np.divide(length(difference_1), length(difference_2))  
-    c_param = a_path_param + np.multiply(t_var, difference_2)  
-     
+    c_a = subtract(closest_point, endpoint_a)
+    b_a = subtract(endpoint_b, endpoint_a)
+    T = length(c_a) / length(b_a) 
+    c_param = a_param + (T * (b_param - a_param))  
     return(c_param)  
+
+
+def get_position(path, param):
+    path_x = path["x"]
+    path_y = path["y"]
+    path_param = path["param"]
+
+    i = int(where_greater_than(param, path_param))
+    endpoint_a = [path_x[i], path_y[i]]
+    endpoint_b = [path_x[i + 1], path_y[i + 1]] 
+    T = (param - path_param[i]) / (path_param[i + 1] - path_param[i])
+    position = endpoint_a + scalar_multiply(subtract(endpoint_b, endpoint_a), T)
+    return(position)  
 
 
 #------------------------------------------------------------------------------#
@@ -210,7 +253,11 @@ def steering_update(character):
         character_4["position"] = position
         character_4["orientation"] = orientation
         character_4["velocity"] = velocity
-
+    if (character_id == 2701):
+        character_5["position"] = position
+        character_5["orientation"] = orientation
+        character_5["velocity"] = velocity
+        
 
 def get_steering_continue(character):
     # Continue moving without changing velocity or orientation
@@ -295,21 +342,21 @@ def get_steering_arrive(character, target):
     return linear_result
 
 
-def follow_path(character, character_path_x, character_path_z):
+def follow_path(character, character_path):
     # Calculate target to delegate to Seek
     character_position = character["position"] # Current position on the path, as a path parameter
     path_offset = character["path_offset"] # Distance farther along path to place target
 	
 	# Find current position on path
-    currentParam = get_param(character_path_x, character_path_z, character_position)  
+    currentParam = get_param(character_path, character_position)  
 		
 	# Offset it
     target_param = min(1, currentParam + path_offset)
 		
 	# Get the target position
-    target_position = get_position(character_path_x, character_path_z, target_param)
+    target_position = get_position(character_path, target_param)
 
-    target = {"target_position": target_position}
+    target = {"position": target_position}
 		
 	# Delegate to seek
     return get_steering_seek(character, target) # Delegate offset target to seek
@@ -439,9 +486,9 @@ character_5 = {
 }
 
 
-character_path_x = [0, -20, 20, -40, 40, -60, 60, 0]
-
-character_path_z = [90, 65, 40, 15, -10, -35, -60, -85]
+path_x = [0, -20, 20, -40, 40, -60, 60, 0]
+path_y = [90, 65, 40, 15, -10, -35, -60, -85]
+character_path = path_assemble(path_x, path_y)
 
 
 #------------------------------------------------------------------------------#
@@ -457,7 +504,7 @@ for x in range(100):
     character_5["timestep"] += timestep
 
     # Call the character's steering movement behavior
-    character_5["linear_acceleration"] = follow_path(character_5, character_path_x, character_path_z)
+    character_5["linear_acceleration"] = follow_path(character_5, character_path)
 
     # Update the character's postion, orientation, and velocity
     steering_update(character_5)
