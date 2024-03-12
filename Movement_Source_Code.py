@@ -114,10 +114,14 @@ def distance(point_x, point_z):
     return math.sqrt((pow((point_z[0] - point_x[0]), 2)) + (pow((point_z[1] - point_x[1]), 2)))
 
 
-def where_greater_than(a, b):
+def which_greater_than(a, b):
+    result = 0
+
     for i in range(len(b)):
-        if a > b[i]:
-            return b[i]
+        if a < b[i]:
+            result = b[i]
+
+    return result
 
 
 #------------------------------------------------------------------------------#
@@ -187,7 +191,7 @@ def get_position(path, param):
     path_y = path["y"]
     path_param = path["param"]
 
-    i = int(where_greater_than(param, path_param))
+    i = int(which_greater_than(param, path_param))
     endpoint_a = [path_x[i], path_y[i]]
     endpoint_b = [path_x[i + 1], path_y[i + 1]] 
     T = (param - path_param[i]) / (path_param[i + 1] - path_param[i])
