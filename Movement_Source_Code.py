@@ -52,6 +52,15 @@ def multiply(vector_1, vector_2):
     return result
 
 
+def addition(vector_1, vector_2):
+    # Adds two vectors
+    result = [0, 0]
+    result[0] = vector_1[0] + vector_2[0]
+    result[1] = vector_1[1] + vector_2[1]
+
+    return result
+
+
 def scalar_multiply(vector_1, scalar):
     # Multiplies a vector by a scalar
     result = [0, 0]
@@ -114,20 +123,23 @@ def distance(point_x, point_z):
     return math.sqrt((pow((point_z[0] - point_x[0]), 2)) + (pow((point_z[1] - point_x[1]), 2)))
 
 
-def which_greater_than(a, b):
-    result = 0
+def max_which(number, vector):
+    # Finds the position of elements that are less than the number
+    # given and returns the largest position
+    result = []
 
-    for i in range(len(b)):
-        if a < b[i]:
-            result = b[i]
-
-    return result
+    for i in range(len(vector)):
+        if number > vector[i]:
+            result.append(i)
+            
+    return max(result)
 
 
 #------------------------------------------------------------------------------#
 #                                Path Operations                               #
 #------------------------------------------------------------------------------#
 def path_assemble(path_x, path_y):
+    # Assemble path data structur
     path_segments = len(path_x) - 1
     path_distance = [0, 0, 0, 0, 0, 0, 0, 0]
 
@@ -142,13 +154,13 @@ def path_assemble(path_x, path_y):
     for i in range(len(path_distance)):
         path_param[i] = path_distance[i] / max(path_distance)
     
-        assembled_path = {
-            "x": path_x,
-            "y": path_y,
-            "distance": path_distance,
-            "param": path_param,
-            "segments": path_segments
-        }
+    assembled_path = {
+        "x": path_x,
+        "y": path_y,
+        "distance": path_distance,
+        "param": path_param,
+        "segments": path_segments
+    }
 
     return assembled_path
 
@@ -181,23 +193,25 @@ def get_param(character_path, character_position):
 
     c_a = subtract(closest_point, endpoint_a)
     b_a = subtract(endpoint_b, endpoint_a)
-    T = length(c_a) / length(b_a) 
-    c_param = a_param + (T * (b_param - a_param))  
+    t_var = length(c_a) / length(b_a) 
+    c_param = a_param + (t_var * (b_param - a_param))
     return(c_param)  
 
 
 def get_position(path, target_param):
+    # Calculate position on path, given target path parameter
     path_x = path["x"]
     path_y = path["y"]
     path_param = path["param"]
+    position = [0, 0]
 
-    i = int(which_greater_than(target_param, path_param))
+    i = (max_which(target_param, path_param))
     endpoint_a = [path_x[i], path_y[i]]
-    endpoint_b = [path_x[i + 1], path_y[i + 1]] 
-    T = (target_param - path_param[i]) / (path_param[i + 1] - path_param[i])
-    position = endpoint_a + scalar_multiply(subtract(endpoint_b, endpoint_a), T)
-    return(position)   
-
+    endpoint_b = [path_x[i + 1], path_y[i + 1]]
+    t_var = (target_param - path_param[i]) / (path_param[i + 1] - path_param[i])
+    position = addition(endpoint_a, scalar_multiply(subtract(endpoint_b, endpoint_a), t_var))
+    return(position)  
+ 
 
 #------------------------------------------------------------------------------#
 #                              Movement Functions                              #
@@ -214,24 +228,23 @@ def steering_update(character):
     velocity = character["velocity"]
     if not velocity:
         velocity = [0,0]
-    orientation = character["orientation"]
-    rotation = 0
-    angular = [0,0]
-    max_velocity = character["max_velocity"]
-    time = timestep
-    character_id = character["id"]
     linear_acceleration = character["linear_acceleration"]
     if not linear_acceleration:
         linear_acceleration = [0,0]
+    orientation = character["orientation"]
+    max_velocity = character["max_velocity"]
+    character_id = character["id"]
+    
+    rotation = 0
+    angular = [0,0]
+    time = timestep
 
     # Update the position and orientation  
-    position[0] += velocity[0] * time  
-    position[1] += velocity[1] * time  
+    position = addition(position, scalar_multiply(velocity, time)) 
     orientation += rotation * time  
 
     # Update the velocity and rotation  
-    velocity[0] += linear_acceleration[0] * time  
-    velocity[1] += linear_acceleration[1] * time  
+    velocity = addition(velocity, scalar_multiply(linear_acceleration, time)) 
     rotation += angular[0] * time  
 
     # Check for speed above max and clip 
@@ -359,7 +372,6 @@ def follow_path(character, character_path):
 		
 	# Get the target position
     target_position = get_position(character_path, target_param)
-
     target = {"position": target_position}
 		
 	# Delegate to seek
@@ -503,7 +515,7 @@ character_path = path_assemble(path_x, path_y)
 # Print initial values
 output_steering(character_5)
 
-for x in range(100):
+for x in range(125):
 
     # Increase timestep by 0.5
     character_5["timestep"] += timestep
