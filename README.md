@@ -1,1 +1,3 @@
-# Python-Projects
+# Python Projects
+
+## Dynamic Movement Algorithms
