@@ -17,7 +17,7 @@ timestep = 0.5
 #------------------------------------------------------------------------------#
 def length(vector):
     # Calculates the length/magnitude of a vector
-    length = math.sqrt((vector[0]*vector[0]) + (vector[1]*vector[1]))
+    length = math.sqrt((pow(vector[0],2) + pow(vector[1],2)))
 
     return length
 
