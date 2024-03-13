@@ -139,7 +139,7 @@ def max_which(number, vector):
 #                                Path Operations                               #
 #------------------------------------------------------------------------------#
 def path_assemble(path_x, path_y):
-    # Assemble path data structur
+    # Assemble path data structure
     path_segments = len(path_x) - 1
     path_distance = [0, 0, 0, 0, 0, 0, 0, 0]
 
@@ -376,7 +376,6 @@ def follow_path(character, character_path):
 		
 	# Delegate to seek
     return get_steering_seek(character, target) # Delegate offset target to seek
-
 
 
 def output_steering(character):
